@@ -2,13 +2,14 @@ import os
 from supabase import create_client, Client
 from typing import Union
 from pydantic import BaseModel
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends,Request
 from fastapi.middleware.cors import CORSMiddleware
 from .or_tools import check_availabiliy
 import json
 from datetime import date
 from datetime import time
 from .dependencies.auth import get_current_user
+
 
 
 app = FastAPI()
@@ -20,6 +21,7 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],  # Allow all headers
 )
+
 
 SUPABASE_URL = "https://xoyzsjymkfcwtumzqzha.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveXpzanlta2Zjd3R1bXpxemhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQyMTk4MTUsImV4cCI6MjA1OTc5NTgxNX0.VLMHbn4-rMaz9DWK1zcIJccWBnaQhrepek-umKH2s0Y"
@@ -36,8 +38,7 @@ class Resource(BaseModel):
 
 @app.get("/")
 def read_root():
-   response = supabase.table("Resources").select("*").execute()
-   return response
+    print("resource-management-services are running")
 
 @app.get("/get-resources")
 def get_resources():
@@ -137,8 +138,14 @@ def modify_booking(request : ModifyBookingRequest):
 
 
 @app.get("/get-bookings")
-def get_resources(user = Depends(get_current_user)):
+def get_resources():
     return supabase.table("Bookings").select("*").execute().data
+
+@app.get("/get-bookings-user")
+def get_resources(request: Request):
+    user = request.session.get('user')
+    user_id = user['id']
+    return supabase.table("Bookings").select("*").eq("booked_by",user_id).execute().data
     
 @app.get("/get-bookings-resource") ##this api endpoint is associated with the IoT part
 def get_bookings(resource_name: str, booked_date: str):
@@ -200,12 +207,12 @@ class Person(BaseModel):
     contact_number:str
 
 @app.get("/get-people")
-def get_people(user = Depends(get_current_user)):
+def get_people():
     return supabase.table("People").select("*").execute().data
 
 
 @app.post("/add-people")
-def add_people(person:Person,user = Depends(get_current_user)):
+def add_people(person:Person):
     (
             supabase.table("People")
             .insert(
@@ -220,7 +227,7 @@ def add_people(person:Person,user = Depends(get_current_user)):
 
 
 @app.put("/assign-people")
-def assign_people(person_id : int,resource: int,user = Depends(get_current_user)):
+def assign_people(person_id : int,resource: int):
         (
             supabase.table("People")
             .update(
