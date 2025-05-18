@@ -62,7 +62,7 @@ services:
     build: 
       context: ./app/authorization-service
     environment:
-      - RABBITMQ_HOST=rabbitmq,
+      - RABBITMQ_HOST=rabbitmq
       - SUPABASE_URL=${SUPABASE_URL3}
       - SUPABASE_KEY=${SUPABASE_KEY3}
     ports:
