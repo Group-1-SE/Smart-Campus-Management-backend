@@ -13,7 +13,7 @@ load_dotenv()
 
 app = FastAPI()
 
-url = "https://campus-portal.ovindu.com"
+url = os.getenv("URL", "http://localhost:5173")
 
 # Configure CORS
 app.add_middleware(
