@@ -8,8 +8,6 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-print(SUPABASE_KEY, SUPABASE_URL)
-
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def log_vehicle(plate_number: str, status: str, security_clear: bool):

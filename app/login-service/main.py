@@ -13,6 +13,8 @@ load_dotenv()
 
 app = FastAPI()
 
+url = "https://campus-portal.ovindu.com"
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -92,12 +94,12 @@ async def auth(request: Request):
             # Create new user
             user = await create_user(email, name, role_id)
             if not user:
-                return RedirectResponse(url='http://localhost:5173?error=Failed to create user')
+                return RedirectResponse(url=f'{url}?error=Failed to create user')
             else:
                 user = get_user_by_email(email)
         
         if not user:
-            return RedirectResponse(url='http://localhost:5173?error=User not authorized')
+            return RedirectResponse(url=f'{url}?error=User not authorized')
             
         print("User found:", user)
         # Step 4: Extract role name from nested "roles" table
@@ -106,7 +108,7 @@ async def auth(request: Request):
         print("Role data:", role_data)
         role_name = role_data.get('role_name') if role_data else None
         if not role_name:
-            return RedirectResponse(url='http://localhost:5173?error=User role not found')
+            return RedirectResponse(url=f'{url}?error=User role not found')
         
         # Step 5: Set session data
         session_data = {
@@ -119,13 +121,13 @@ async def auth(request: Request):
         
         # Create response with session data
         if role_name == 'Student':
-            redirect_url = 'http://localhost:5173/student-dashboard'
+            redirect_url = f'{url}/student-dashboard'
         elif role_name == 'Faculty':
-            redirect_url = 'http://localhost:5173/faculty-dashboard'
+            redirect_url = f'{url}/faculty-dashboard'
         elif role_name == 'Admin':
-            redirect_url = 'http://localhost:5173/admin-dashboard'
+            redirect_url = f'{url}/admin-dashboard'
         else:
-            redirect_url = 'http://localhost:5173?error=Unknown role'
+            redirect_url = f'{url}?error=Unknown role'
         
         # Set session before creating response
         request.session['user'] = session_data
@@ -140,7 +142,7 @@ async def auth(request: Request):
         return response
     except Exception as e:
         print(f"Auth error: {str(e)}")
-        return RedirectResponse(url='http://localhost:5173?error=Authentication Failed')
+        return RedirectResponse(url=f'{url}?error=Authentication Failed')
 
 @app.get("/user")
 async def get_user(request: Request):
@@ -157,5 +159,5 @@ async def get_user(request: Request):
 async def logout(request: Request):
     request.session.pop('user', None)
     return JSONResponse({
-        'redirect': 'http://localhost:5173'
+        'redirect': f'{url}'
     }) 

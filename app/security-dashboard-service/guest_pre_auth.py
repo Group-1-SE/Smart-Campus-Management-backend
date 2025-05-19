@@ -19,8 +19,6 @@ def insert_guest_vehicle(
     added_by: str
 ):
     try:
-        print("Adding guest vehicle to the database...")
-        # print(plate_number, reason, added_by, valid_from, valid_until)
         response = supabase.table("guest_vehicles").insert({
             "plate_number": plate_number,
             "name": owner_name,
@@ -29,8 +27,6 @@ def insert_guest_vehicle(
             "valid_until": valid_until,
             "added_by": added_by
         }).execute()
-        
-        print("Response from Supabase:", response)
 
         if response.status_code == 201:
             print("Guest vehicle added successfully:", response)

@@ -11,15 +11,9 @@ RETRY_ATTEMPTS = 10
 RETRY_DELAY = 5
 
 # Global connection and channel variables
-connection = None
-channel = None
 
 def get_connection():
     """Helper function to establish RabbitMQ connection with retries."""
-    global connection, channel
-    
-    if connection and not connection.is_closed:
-        return connection
         
     for attempt in range(RETRY_ATTEMPTS):
         try:
@@ -55,12 +49,12 @@ def get_connection():
             else:
                 print("Max retry attempts reached. Could not establish initial connection to RabbitMQ.")
                 raise
-            
+
 def consume_vehicle_detected():
-    global connection, channel
     while True:  # Keep trying to reconnect if connection is lost
         try:
             connection = get_connection()
+            channel = connection.channel()
             if not connection:
                 print("Authorization service could not start consumer due to connection failure.")
                 time.sleep(RETRY_DELAY)
@@ -125,11 +119,10 @@ def consume_vehicle_detected():
             continue
 
 def publish_authorization_result(data: dict):
-    global connection, channel
     try:
-        if not connection or connection.is_closed:
-            connection = get_connection()
-            channel = connection.channel()
+
+        connection = get_connection()
+        channel = connection.channel()
 
         channel.queue_declare(queue="vehicle.authorization.result", durable=True)
         channel.basic_publish(
@@ -147,11 +140,9 @@ def publish_authorization_result(data: dict):
         raise
 
 def publish_manual_approval_request(data: dict):
-    global connection, channel
     try:
-        if not connection or connection.is_closed:
-            connection = get_connection()
-            channel = connection.channel()
+        connection = get_connection()
+        channel = connection.channel()
 
         channel.queue_declare(queue="manual_approval_requests", durable=True)
         channel.basic_publish(

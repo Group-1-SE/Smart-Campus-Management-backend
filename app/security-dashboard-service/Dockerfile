@@ -15,7 +15,7 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the service code
+# Copy the service code and static files
 COPY . .
 
 # Expose the port the app runs on

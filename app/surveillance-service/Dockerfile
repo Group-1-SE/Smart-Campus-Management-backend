@@ -4,7 +4,7 @@ FROM python:3.8-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies for OpenCV and other requirements
 RUN apt-get update && apt-get install -y \
     build-essential \
     libgl1-mesa-glx \
@@ -22,8 +22,10 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the YOLO model and service code
+# Copy the YOLOv8 model file
 COPY yolov8n.pt .
+
+# Copy the service code
 COPY . .
 
 # Expose the port the app runs on
