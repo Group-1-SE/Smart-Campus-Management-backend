@@ -126,19 +126,19 @@ services:
     networks:
       - smart-campus-network
 
-  attendance-service: # Add the new attendance service
-    build:
-      context: ./app/attendance
-    environment:
-      - RABBITMQ_HOST=rabbitmq
-      - SUPABASE_URL=${SUPABASE_URL1}
-      - SUPABASE_KEY=${SUPABASE_KEY1}
-    ports:
-      - "8006:8000" # Map host port 8006 to container port 4000
-    depends_on:
-      - rabbitmq
-    networks:
-      - smart-campus-network
+  # attendance-service: # Add the new attendance service
+  #   build:
+  #     context: ./app/attendance
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  #     - SUPABASE_URL=${SUPABASE_URL1}
+  #     - SUPABASE_KEY=${SUPABASE_KEY1}
+  #   ports:
+  #     - "8006:8000" # Map host port 8006 to container port 4000
+  #   depends_on:
+  #     - rabbitmq
+  #   networks:
+  #     - smart-campus-network
 
   schedule-manager: # Add the new schedule-manager service
     build:
@@ -165,6 +165,24 @@ services:
       - rabbitmq # Depends on rabbitmq
     networks:
       - smart-campus-network
+
+  # surveillance-service:
+  #   build:
+  #     context: ./app/surveillance-service
+  #   environment:
+  #     - RABBITMQ_HOST=rabbitmq
+  #   ports:
+  #     - "8011:8000"  # Map host port 8011 to container port 8000
+  #   # volumes:
+  #   #   - /dev/video0:/dev/video0  # Mount the webcam device
+  #   # devices:
+  #   #   - /dev/video0:/dev/video0  # Give container access to webcam
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy  # Wait for RabbitMQ to be healthy
+  #   networks:
+  #     - smart-campus-network
+  #   privileged: true  # Required for accessing video devices
 
 networks:
   smart-campus-network:

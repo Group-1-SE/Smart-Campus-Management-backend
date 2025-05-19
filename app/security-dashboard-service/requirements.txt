@@ -3,5 +3,5 @@ supabase
 pika
 jinja2
 dotenv
-python-multipart
 uvicorn
+python-multipart

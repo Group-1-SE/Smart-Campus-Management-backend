@@ -1,17 +1,22 @@
 import pika
 import json
 import os
+import time
 from supabase_utils import log_vehicle, log_surveillance_alert
 import threading
-import time
 
 # Define the RabbitMQ host using an environment variable, defaulting to 'rabbitmq'
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
 RETRY_ATTEMPTS = 10
 RETRY_DELAY = 5
 
+# Global connection and channel variables
+
+
 def get_connection():
     """Helper function to establish RabbitMQ connection with retries."""
+
+        
     for attempt in range(RETRY_ATTEMPTS):
         try:
             print(f"Attempt {attempt + 1}/{RETRY_ATTEMPTS}: Connecting to RabbitMQ at {RABBITMQ_HOST}")
@@ -28,7 +33,7 @@ def get_connection():
                 connection_attempts=3,
                 retry_delay=5,
                 socket_timeout=5,
-                frame_max=131072,  # Maximum allowed frame size for AMQP 0.9.1
+                frame_max=131072,  
                 channel_max=65535,  # Maximum allowed channels
                 tcp_options={
                     'TCP_KEEPIDLE': 60,
@@ -55,28 +60,30 @@ def get_connection():
                 raise
 
 def consume_vehicle_authorized():
+    # connection = None
+    # channel = None
     while True:  # Keep trying to reconnect if connection is lost
         try:
             connection, channel = get_connection()
             if not connection:
-                print("Could not start vehicle authorized consumer due to connection failure.")
+                print("Logger service could not start vehicle authorization consumer due to connection failure.")
                 time.sleep(RETRY_DELAY)
                 continue
 
             channel.queue_declare(queue="vehicle.authorization.result", durable=True)
 
             def callback(ch, method, properties, body):
-                data = json.loads(body)
-                print(f"[x] Received vehicle authorization data: {data}")
                 try:
+                    data = json.loads(body)
+                    print(f"[x] Received vehicle authorization data: {data}")
                     log_vehicle(data["plate_number"], "entered", True)  # TODO: Dynamic
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                 except Exception as e:
-                    print(f"Error processing vehicle authorization message {data}: {str(e)}")
+                    print(f"Error processing vehicle authorization message: {str(e)}")
                     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
             # Generate a unique consumer tag
-            consumer_tag = f"vehicle_auth_{int(time.time())}_{os.getpid()}"
+            consumer_tag = f"vehicle_auth_ctag_{int(time.time())}_{os.getpid()}"
             
             channel.basic_consume(
                 queue="vehicle.authorization.result",
@@ -105,28 +112,30 @@ def consume_vehicle_authorized():
             continue
 
 def consume_surveillance_alerts():
+    # connection = None
+    # channel = None
     while True:  # Keep trying to reconnect if connection is lost
         try:
-            connection, channel = get_connection()
+            connection, channel  = get_connection()
             if not connection:
-                print("Could not start surveillance alerts consumer due to connection failure.")
+                print("Logger service could not start surveillance alerts consumer due to connection failure.")
                 time.sleep(RETRY_DELAY)
                 continue
 
             channel.queue_declare(queue="surveillance.alerts", durable=True)
 
             def callback(ch, method, properties, body):
-                data = json.loads(body)
-                print(f"[x] Received surveillance alert: {data}")
                 try:
+                    data = json.loads(body)
+                    print(f"[x] Received surveillance alert: {data}")
                     log_surveillance_alert(data)
                     ch.basic_ack(delivery_tag=method.delivery_tag)
                 except Exception as e:
-                    print(f"Error processing surveillance alert message {data}: {str(e)}")
+                    print(f"Error processing surveillance alert message: {str(e)}")
                     ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
             # Generate a unique consumer tag
-            consumer_tag = f"surveillance_{int(time.time())}_{os.getpid()}"
+            consumer_tag = f"surveillance_ctag_{int(time.time())}_{os.getpid()}"
             
             channel.basic_consume(
                 queue="surveillance.alerts",

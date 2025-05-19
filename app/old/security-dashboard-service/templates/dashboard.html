@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Dashboard</title>
+</head>
+<body>
+    <h1>Unauthorized Vehicles</h1>
+    <ul>
+        {% for vehicle in vehicles %}
+            <li>
+                Plate: {{ vehicle.plate_number }} |
+                <form action="/approve/{{ vehicle.plate_number }}" method="post" style="display:inline;">
+                    <button type="submit">Allow</button>
+                </form>
+            </li>
+        {% else %}
+            <li>No pending approvals</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>Add Guest Vehicle</h2>
+    <form action="/add-guest-vehicle" method="post">
+        <label for="plate_number">Plate Number:</label>
+        <input type="text" name="plate_number" required><br><br>
+
+        <label for="name">Owner Name:</label>
+        <input type="text" name="name" required><br><br>
+
+        <label for="reason">Reason for Visit:</label>
+        <input type="text" name="reason"><br><br>
+
+        <label for="valid_from">Valid From:</label>
+        <input type="datetime-local" name="valid_from" required><br><br>
+
+        <label for="valid_until">Valid Until:</label>
+        <input type="datetime-local" name="valid_until" required><br><br>
+
+        <label for="added_by">Added By (Officer Name):</label>
+        <input type="text" name="added_by" required><br><br>
+
+        <button type="submit">Add Guest Vehicle</button>
+    </form>
+</body>
+</html>

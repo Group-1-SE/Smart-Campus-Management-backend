@@ -25,7 +25,31 @@ def check_authorization(plate_number: str) -> bool:
             .gte("valid_until", now) \
             .execute()
 
-        return bool(guest_result.data)
+        if guest_result.data:
+            return True
+
+        # Check for event-based authorization
+        current_date = datetime.now().date().isoformat()
+        current_time = datetime.now().time().isoformat()
+
+        # Query for active events that include this vehicle
+        event_result = supabase.table("events").select(
+            "id, event_name, event_date, start_time, end_time"
+        ).eq("status", "active").eq("event_date", current_date).execute()
+
+        if event_result.data:
+            # Check if current time is within any active event's time window
+            for event in event_result.data:
+                if event["start_time"] <= current_time <= event["end_time"]:
+                    # Check if vehicle is registered for this event
+                    vehicle_result = supabase.table("event_guest_vehicles").select(
+                        "*"
+                    ).eq("event_id", event["id"]).eq("plate_number", plate_number).execute()
+
+                    if vehicle_result.data:
+                        return True
+
+        return False
     
     except Exception as e:
         print(f"Error checking authorization: {e}")

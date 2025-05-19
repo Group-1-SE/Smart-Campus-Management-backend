@@ -2,6 +2,7 @@ import threading
 from datetime import datetime
 from detection_yolo import run_yolo_detection
 from motion_detection import detect_motion
+from vehicle_detection import run_vehicle_detection
 
 def main():
     print("[INFO] Starting Surveillance Service...")
@@ -9,6 +10,10 @@ def main():
     # Run YOLO detection for vehicle/person detection
     yolo_thread = threading.Thread(target=run_yolo_detection)
     yolo_thread.start()
+
+    # Run vehicle detection for main entrance
+    vehicle_thread = threading.Thread(target=run_vehicle_detection)
+    vehicle_thread.start()
 
     # Check if it's after hours (1 AM - 5 AM)
     current_hour = datetime.now().hour
@@ -19,6 +24,7 @@ def main():
 
     # Wait for the YOLO thread to finish
     yolo_thread.join()
+    vehicle_thread.join()
 
 if __name__ == "__main__":
     main()
