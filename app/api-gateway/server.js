@@ -19,7 +19,7 @@ const port = process.env.PORT || 8000;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/realtime/face-recognition' });
 
-const allowedOrigins = ["**"];
+const allowedOrigins = ["http://localhost:5173", "https://campus-portal.ovindu.com"];
 
 app.use(express.json());
 app.use(cookieParser());
