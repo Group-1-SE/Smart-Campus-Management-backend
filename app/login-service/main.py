@@ -13,7 +13,14 @@ load_dotenv()
 
 app = FastAPI()
 
-url = os.getenv("URL", "http://localhost:5173")
+production_status = os.getenv("PRODUCTION_STATUS", "development")
+
+url = "https://campus-portal.ovindu.com" if production_status == "production" else "http://localhost:5173"
+
+print("Environment:", os.getenv("PRODUCTION_STATUS"))
+print("Google Client ID:", os.getenv("GOOGLE_CLIENT_ID"))
+
+print(url)
 
 # Configure CORS
 app.add_middleware(
