@@ -2,7 +2,7 @@ import os
 from supabase import create_client, Client
 from typing import Union
 from pydantic import BaseModel
-from fastapi import FastAPI, Depends,Request
+from fastapi import FastAPI, Depends,Request,Query
 from fastapi.middleware.cors import CORSMiddleware
 from .or_tools import check_availabiliy
 import json
@@ -142,10 +142,8 @@ def get_resources():
     return supabase.table("Bookings").select("*").execute().data
 
 @app.get("/get-bookings-user")
-def get_resources(request: Request):
-    user = request.session.get('user')
-    user_id = user['id']
-    return supabase.table("Bookings").select("*").eq("booked_by",user_id).execute().data
+def get_resources(userid: str = Query(...)):
+    return supabase.table("Bookings").select("*").eq("booked_by",userid).execute().data
     
 @app.get("/get-bookings-resource") ##this api endpoint is associated with the IoT part
 def get_bookings(resource_name: str, booked_date: str):
