@@ -56,6 +56,38 @@ def insert_resource(resource: Resource):
         .execute()
     )
     return response
+class ResourceUpdate(BaseModel):
+    name: str
+    type: str
+    capacity: int
+
+@app.put("/resource-update/{resource_id}")
+def update_resource(resource_id: int, updated_resource: ResourceUpdate):
+    response = (
+        supabase.table("Resources")
+        .update({
+            "resource_name": updated_resource.name,
+            "resource_type": updated_resource.type,
+            "capacity": updated_resource.capacity
+        })
+        .eq("id", resource_id)
+        .execute()
+    )
+    
+    if len(response.data) == 0:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    return {"message": "Resource updated successfully", "data": response.data}
+
+@app.delete("/resource-delete/{resource_id}")
+def delete_resource(resource_id: str):
+    response = (
+        supabase.table("Resources")
+        .delete()
+        .eq("id", resource_id)
+        .execute()
+    )
+    return response
 
 class Booking (BaseModel):
     booked_by : str
@@ -97,44 +129,25 @@ def create_booking(booking : Booking):
        return {"error": "Resource not available on the specified time slot"}
 
 
-class ModifyBookingRequest(BaseModel):
-    new_booking: Booking
-    old_booking: Booking
+class UpdateBookingRequest(BaseModel):
+    id: int
+    date: str
+    startTime: str
+    endTime: str
+    # add any other fields you want to update
 
+@app.put("/booking-update")
+def update_booking(request: UpdateBookingRequest):
+    # Replace this with your actual DB update logic using Supabase or ORM
+    response = supabase.table("Bookings").update({
+        "booking_on": request.date,
+        "booking_starttime": request.startTime,
+        "booking_endtime": request.endTime,
+        # other fields here
+    }).eq("id", request.id).execute()
 
-
-@app.post("/modify-booking")
-def modify_booking(request : ModifyBookingRequest):
-    response_1 = (supabase.table("Bookings").select("id").eq("resource_name",request.old_booking.resource_name).eq("booking_on",request.old_booking.booked_date)
-                  .eq("booking_starttime",request.old_booking.start).eq("booking_endtime",request.old_booking.end).execute())
-    
-    current_booking_id = response_1.data[0]["id"]
-    
-    response_2 = (
-        supabase.table("Bookings").select("booking_endtime","booking_starttime")
-        .eq("booking_on",request.new_booking.booked_date).eq("resource_name",request.new_booking.resource_name).neq("id",current_booking_id)
-        .execute()
-    )
-    startimes=[]
-    endtimes=[]
-    for x in response_2.data:
-       startimes.append(x["booking_starttime"])
-       endtimes.append(x["booking_endtime"])
-    available = check_availabiliy(startimes,endtimes,request.new_booking.start,request.new_booking.end)
-    if available:
-       supabase.table("Bookings") \
-        .update({
-        "booked_by": request.new_booking.booked_by,
-        "resource_name": request.new_booking.resource_name,
-        "booking_starttime": request.new_booking.start,
-        "booking_endtime": request.new_booking.end,
-        "booking_on": request.new_booking.booked_date
-    }) \
-    .eq("id", current_booking_id) \
-    .execute()
-       print("booking modified successfully")
-    else:
-        print("Resource not available on the specified time slot")
+    if response.data:
+        return response.data[0]  # return updated booking
 
 
 @app.get("/get-bookings")
