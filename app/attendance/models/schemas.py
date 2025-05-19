@@ -21,6 +21,10 @@ class ManualAttendanceRequest(BaseModel):
     location: Optional[str] = None
     course_code: str
 
+class courseReportRequest(BaseModel):
+    course_code: str
+    start_date: Optional[date]
+
 class StudentProfile(BaseModel):
     reg_number: str
     name: Optional[str] = None
