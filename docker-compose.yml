@@ -127,19 +127,19 @@ services:
     networks:
       - smart-campus-network
 
-  # attendance-service: # Add the new attendance service
-  #   build:
-  #     context: ./app/attendance
-  #   environment:
-  #     - RABBITMQ_HOST=rabbitmq
-  #     - SUPABASE_URL=${SUPABASE_URL1}
-  #     - SUPABASE_KEY=${SUPABASE_KEY1}
-  #   ports:
-  #     - "8006:8000" # Map host port 8006 to container port 4000
-  #   depends_on:
-  #     - rabbitmq
-  #   networks:
-  #     - smart-campus-network
+  attendance-service: # Add the new attendance service
+    build:
+      context: ./app/attendance
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - SUPABASE_URL=${SUPABASE_URL1}
+      - SUPABASE_KEY=${SUPABASE_KEY1}
+    ports:
+      - "8006:8000" # Map host port 8006 to container port 4000
+    depends_on:
+      - rabbitmq
+    networks:
+      - smart-campus-network
 
   schedule-manager: # Add the new schedule-manager service
     build:
@@ -184,6 +184,21 @@ services:
   #   networks:
   #     - smart-campus-network
   #   privileged: true  # Required for accessing video devices
+
+  student-dashboard:
+    build:
+      context: ./app/student-dashboard
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - SUPABASE_URL=${SUPABASE_URL4}
+      - SUPABASE_KEY=${SUPABASE_KEY4}
+    ports:
+      - "8020:8000"  # Map host port 8020 to container port 8000
+    depends_on:
+      - rabbitmq
+    networks:
+      - smart-campus-network
+
 
 networks:
   smart-campus-network:
