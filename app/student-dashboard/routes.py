@@ -6,7 +6,7 @@ from controllers import (
     student_course_profile_controller, recommendation_logs_controller, course_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
-    get_student_profile
+    get_student_profile, get_student_course_profile, get_student_course_results
 )
 
 router = APIRouter()
@@ -25,35 +25,35 @@ table_routes = {
 }
 
 # User Management Endpoints
-@router.get("/api/users/students", tags=["users"])
+@router.get("/users/students", tags=["users"])
 async def get_all_students():
-    students = await get_users_by_role("student")
+    students = await get_users_by_role("Student")
     if not students:
         raise HTTPException(status_code=404, detail="No students found")
     return students
 
-@router.get("/api/users/faculty", tags=["users"])
+@router.get("/users/faculty", tags=["users"])
 async def get_all_faculty():
-    faculty = await get_users_by_role("faculty")
+    faculty = await get_users_by_role("Faculty")
     if not faculty:
         raise HTTPException(status_code=404, detail="No faculty found")
     return faculty
 
-@router.get("/api/users/role/{role_name}", tags=["users"])
+@router.get("/users/role/{role_name}", tags=["users"])
 async def get_users_by_role_name(role_name: str):
     users = await get_users_by_role(role_name)
     if not users:
         raise HTTPException(status_code=404, detail=f"No users found with role {role_name}")
     return users
 
-@router.get("/api/users/batch/{batch_id}", tags=["users"])
+@router.get("/users/batch/{batch_id}", tags=["users"])
 async def get_batch_users(batch_id: int):
     users = await get_batch_students(batch_id)
     if not users:
         raise HTTPException(status_code=404, detail=f"No users found in batch {batch_id}")
     return users
 
-@router.get("/api/users/{user_id}/profile", tags=["users"])
+@router.get("/users/{user_id}/profile", tags=["users"])
 async def get_user_profile(user_id: int):
     profile = await get_student_profile(user_id)
     if not profile:
@@ -61,28 +61,28 @@ async def get_user_profile(user_id: int):
     return profile
 
 # Course Management Endpoints
-@router.get("/api/courses/active", tags=["courses"])
+@router.get("/courses/active", tags=["courses"])
 async def get_active_courses():
     courses = await course_controller["read"]({"status": "active"})
     if not courses:
         raise HTTPException(status_code=404, detail="No active courses found")
     return courses
 
-@router.get("/api/courses/batch/{batch_id}", tags=["courses"])
+@router.get("/courses/batch/{batch_id}", tags=["courses"])
 async def get_batch_courses_endpoint(batch_id: int):
     courses = await get_batch_courses(batch_id)
     if not courses:
         raise HTTPException(status_code=404, detail=f"No courses found for batch {batch_id}")
     return courses
 
-@router.get("/api/courses/student/{student_id}", tags=["courses"])
+@router.get("/courses/student/{student_id}", tags=["courses"])
 async def get_student_courses_endpoint(student_id: int):
     courses = await get_student_courses(student_id)
     if not courses:
         raise HTTPException(status_code=404, detail=f"No courses found for student {student_id}")
     return courses
 
-@router.get("/api/courses/{course_id}/students", tags=["courses"])
+@router.get("/courses/{course_id}/students", tags=["courses"])
 async def get_course_students_endpoint(course_id: int):
     students = await get_course_students(course_id)
     if not students:
@@ -90,14 +90,14 @@ async def get_course_students_endpoint(course_id: int):
     return students
 
 # Student Progress Endpoints
-@router.get("/api/student-progress/student/{student_id}", tags=["student-progress"])
+@router.get("/student-progress/student/{student_id}", tags=["student-progress"])
 async def get_student_progress_endpoint(student_id: int):
     progress = await get_student_progress(student_id)
     if not progress:
         raise HTTPException(status_code=404, detail=f"No progress found for student {student_id}")
     return progress
 
-@router.get("/api/student-progress/course/{course_id}", tags=["student-progress"])
+@router.get("/student-progress/course/{course_id}", tags=["student-progress"])
 async def get_course_progress(course_id: int):
     progress = await student_progress_controller["read"]({"course_id": course_id})
     if not progress:
@@ -105,14 +105,14 @@ async def get_course_progress(course_id: int):
     return progress
 
 # Batch Management Endpoints
-@router.get("/api/batch/active", tags=["batch"])
-async def get_active_batches():
-    batches = await batch_controller["read"]({"status": "active"})
-    if not batches:
-        raise HTTPException(status_code=404, detail="No active batches found")
-    return batches
+# @router.get("/batch/active", tags=["batch"])
+# async def get_active_batches():
+#     batches = await batch_controller["read"]({"status": "active"})
+#     if not batches:
+#         raise HTTPException(status_code=404, detail="No active batches found")
+#     return batches
 
-@router.get("/api/batch/{batch_id}/students", tags=["batch"])
+@router.get("/batch/{batch_id}/students", tags=["batch"])
 async def get_batch_students_endpoint(batch_id: int):
     students = await get_batch_students(batch_id)
     if not students:
@@ -121,7 +121,7 @@ async def get_batch_students_endpoint(batch_id: int):
 
 # Keep existing table routes
 for table, controller in table_routes.items():
-    prefix = f"/api/{table}"
+    prefix = f"/{table}"
     
     @router.post(prefix, tags=[table])
     async def create_item(record: Record, controller=controller):
@@ -147,3 +147,17 @@ for table, controller in table_routes.items():
         if not result:
             raise HTTPException(status_code=404, detail=f"No matching {table} found to delete")
         return result
+    
+    @router.get("/users/{user_id}/course-profile", tags=["users"])
+    async def get_user_course_profile(user_id: str):
+        profile = await get_student_course_profile(user_id)
+        if not profile:
+            raise HTTPException(status_code=404, detail=f"Course profile not found for user {user_id}")
+        return profile
+    
+    @router.get("/users/{student_id}/course-results", tags=["users"])
+    async def get_student_results(student_id: str):
+        results = await get_student_course_results(student_id)
+        if not results:
+            raise HTTPException(status_code=404, detail=f"No course results found for student {student_id}")
+        return results
