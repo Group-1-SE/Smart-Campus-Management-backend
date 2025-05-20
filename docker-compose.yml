@@ -200,6 +200,26 @@ services:
     networks:
       - smart-campus-network
 
+  plate-detector:
+    build: 
+      context: ./app/plate-detector-service
+      dockerfile: Dockerfile
+    ports:
+      - "8015:8000"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - SUPABASE_URL=${SUPABASE_URL3}
+      - SUPABASE_KEY=${SUPABASE_KEY3}
+    depends_on:
+      - rabbitmq
+    # volumes:
+    #   - ./plate-detector-service:/app
+    networks:
+      - smart-campus-network
+
 
 networks:
   smart-campus-network:
