@@ -19,5 +19,7 @@ student_progress_model = make_model("student_progress")
 student_course_profile_model = make_model("student_course_profile")
 recommendation_logs_model = make_model("recommendation_logs")
 course_model = make_model("course")
+assignments_model = make_model("assignments")
+exams_model = make_model("exams")
 enrollment_model = make_model("enrollment")
 faculty_course_profile_model = make_model("faculty_course_profile") # Added faculty_course_profile_model

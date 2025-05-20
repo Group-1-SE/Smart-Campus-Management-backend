@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from datetime import datetime, date
+from datetime import datetime, date, time
 from typing import Optional
 
 class User(BaseModel):
@@ -64,3 +64,27 @@ class RecommendationLog(BaseModel):
 class Course(BaseModel):
     id: str
     name: str
+
+class Assigments(BaseModel):
+    id: str
+    name: str
+    user_id: str
+    course_id: str
+    description: str
+    due_date_and_time: datetime
+    attachment_url: str
+    notified: bool
+
+
+# class Exams(BaseModel):
+#     id: str
+#     name: str
+#     user_id: str
+#     course_id: str
+#     description: str
+#     date:date
+#     start_time: time
+#     end_time: time
+#     total_marks:int
+#     passing_marks:int
+    

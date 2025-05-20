@@ -4,8 +4,11 @@ from controllers import (
     user_controller, auth_user_controller, roles_controller,
     batch_controller, related_batch_controller, student_progress_controller,
     student_course_profile_controller, recommendation_logs_controller, course_controller,
+    assignments_controller, exams_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
+    get_student_profile, get_assignments_by_course_id,
+    get_exams_by_course_id, get_all_exams,
     get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id, get_unregistered_students_by_course_id,
     enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course
 )
@@ -24,7 +27,8 @@ table_routes = {
     "student_progress": student_progress_controller,
     "student_course_profile": student_course_profile_controller,
     "recommendation_logs": recommendation_logs_controller,
-    "course": course_controller
+    "course": course_controller,
+    "assignments": assignments_controller
 }
 
 # User Management Endpoints
@@ -122,6 +126,49 @@ async def get_batch_students_endpoint(batch_id: str):
         raise HTTPException(status_code=404, detail=f"No students found in batch {batch_id}")
     return students
 
+@router.get("/api/assignments/{course_id}", tags=["assignments"])
+async def get_assignments_endpoint(course_id:str):
+    assignments = await get_assignments_by_course_id(course_id)
+    if not assignments:
+        raise HTTPException(status_code=404, detail=f"No students found in course {course_id}")
+    return assignments
+
+
+@router.post("/api/assignments", tags=["assignments"])
+async def create_assignment(assignment: dict = Body(...)):
+    """
+    Create a new assignment.
+    The frontend should send a JSON object with the assignment details.
+    """
+    result = await assignments_controller["create"](assignment)
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create assignment")
+    return result
+
+@router.get("/api/exams/{course_id}", tags=["exams"])
+async def get_exams_endpoint(course_id:str):
+    assignments = await get_exams_by_course_id(course_id)
+    if not assignments:
+        raise HTTPException(status_code=404, detail=f"No exams found in course {course_id}")
+    return assignments
+
+@router.get("/api/exams", tags=["exams"])
+async def get_all_exams_endpoint():
+    exams = await get_all_exams()
+    if not exams:
+        raise HTTPException(status_code=404, detail="No exams found")
+    return exams
+
+@router.post("/api/exams", tags=["exams"])
+async def create_exams(exam: dict = Body(...)):
+    """
+    Create a new assignment.
+    The frontend should send a JSON object with the assignment details.
+    """
+    result = await exams_controller["create"](exam)
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create assignment")
+    return result
 @router.get("/recommendations/study/{student_id}/", tags=["recommendations"])
 async def get_student_recommendations_endpoint(student_id: str):
     recommendations = await get_study_recommendations_controller(student_id)
