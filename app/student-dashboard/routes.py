@@ -6,7 +6,7 @@ from controllers import (
     student_course_profile_controller, recommendation_logs_controller, course_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
-    get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller
+    get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id
 )
 from recommendations.main import get_study_recommendations, get_course_recommendations
 from typing import List, Dict
@@ -135,6 +135,20 @@ async def get_course_recommendations_endpoint(student_id: str):
     if not recommendations:
         raise HTTPException(status_code=404, detail=f"No recommendations found for student {student_id}")
     return recommendations
+
+@router.get("/courses/{course_id}/data", tags=["courses"]) # Define the new route
+async def get_course_data(course_id: str):
+    course_data = await get_course_data_by_course_id(course_id)
+    if not course_data["students_data"]:
+        # Optional: Raise 404 if no students are found, or return the structure with empty list
+        # raise HTTPException(status_code=404, detail=f"No data found for course {course_id}")
+        pass # Return the empty list as per the controller's design
+
+    return course_data
+
+
+
+
 # Keep existing table routes
 for table, controller in table_routes.items():
     prefix = f"/{table}"

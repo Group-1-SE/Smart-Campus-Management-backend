@@ -7,7 +7,8 @@ from models import (
     student_progress_model,
     student_course_profile_model,
     recommendation_logs_model,
-    course_model
+    course_model,
+    enrollment_model
 )
 
 # Helper to wrap models as controller logic
@@ -32,6 +33,7 @@ student_progress_controller = make_controller(student_progress_model)
 student_course_profile_controller = make_controller(student_course_profile_model)
 recommendation_logs_controller = make_controller(recommendation_logs_model)
 course_controller = make_controller(course_model)
+enrollment_controller = make_controller(enrollment_model)
 
 async def get_users_by_role(role_name):
     role = await roles_controller["read"]({"role_name": role_name})
@@ -180,3 +182,36 @@ async def get_course_recommendations_controller(student_id):
         # "courses": transformed,
         # "available_courses": available_courses
     }
+    
+
+async def get_course_data_by_course_id(course_id):
+    # Find all enrollments for the given course_id
+    enrollments = await enrollment_controller["read"]({"course_id": course_id})
+
+    if not enrollments:
+        return {"course_id": course_id, "students_data": []}
+
+    students_data = []
+    for enrollment in enrollments:
+        student_id = enrollment["user_id"]
+        enrollment_id = enrollment["id"]
+
+        # Get student details
+        student = await user_controller["read"]({"id": student_id})
+
+        # Get grades for this enrollment
+        grades = await student_course_profile_controller["read"]({"student_id": student_id, "course_id": course_id})
+        if grades:
+            grades = grades[0]  # Assuming we want the first record
+        else:   
+            grades = None
+
+        student_info = student[0] if student else {"id": student_id, "email": "N/A"} # Basic info if student not found
+
+        students_data.append({
+            "student_info": student_info,
+            "enrollment_id": enrollment_id,
+            "data": grades if grades else "" # List of grades for this enrollment
+        })
+
+    return {"students_data": students_data}
