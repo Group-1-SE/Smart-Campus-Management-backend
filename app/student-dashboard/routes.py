@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from request_schemas import Record, Filter, UpdateRequest
 from controllers import (
     user_controller, auth_user_controller, roles_controller,
     batch_controller, related_batch_controller, student_progress_controller,
     student_course_profile_controller, recommendation_logs_controller, course_controller,
+    assignments_controller, exams_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
-    get_student_profile
+    get_student_profile, get_assignments_by_course_id,
+    get_exams_by_course_id, get_all_exams
 )
 
 router = APIRouter()
@@ -21,20 +23,21 @@ table_routes = {
     "student_progress": student_progress_controller,
     "student_course_profile": student_course_profile_controller,
     "recommendation_logs": recommendation_logs_controller,
-    "course": course_controller
+    "course": course_controller,
+    "assignments": assignments_controller
 }
 
 # User Management Endpoints
 @router.get("/api/users/students", tags=["users"])
 async def get_all_students():
-    students = await get_users_by_role("student")
+    students = await get_users_by_role("Student")
     if not students:
         raise HTTPException(status_code=404, detail="No students found")
     return students
 
 @router.get("/api/users/faculty", tags=["users"])
 async def get_all_faculty():
-    faculty = await get_users_by_role("faculty")
+    faculty = await get_users_by_role("Faculty")
     if not faculty:
         raise HTTPException(status_code=404, detail="No faculty found")
     return faculty
@@ -47,7 +50,7 @@ async def get_users_by_role_name(role_name: str):
     return users
 
 @router.get("/api/users/batch/{batch_id}", tags=["users"])
-async def get_batch_users(batch_id: int):
+async def get_batch_users(batch_id: str):
     users = await get_batch_students(batch_id)
     if not users:
         raise HTTPException(status_code=404, detail=f"No users found in batch {batch_id}")
@@ -113,11 +116,55 @@ async def get_active_batches():
     return batches
 
 @router.get("/api/batch/{batch_id}/students", tags=["batch"])
-async def get_batch_students_endpoint(batch_id: int):
+async def get_batch_students_endpoint(batch_id: str):
     students = await get_batch_students(batch_id)
     if not students:
         raise HTTPException(status_code=404, detail=f"No students found in batch {batch_id}")
     return students
+
+@router.get("/api/assignments/{course_id}", tags=["assignments"])
+async def get_assignments_endpoint(course_id:str):
+    assignments = await get_assignments_by_course_id(course_id)
+    if not assignments:
+        raise HTTPException(status_code=404, detail=f"No students found in course {course_id}")
+    return assignments
+
+
+@router.post("/api/assignments", tags=["assignments"])
+async def create_assignment(assignment: dict = Body(...)):
+    """
+    Create a new assignment.
+    The frontend should send a JSON object with the assignment details.
+    """
+    result = await assignments_controller["create"](assignment)
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create assignment")
+    return result
+
+@router.get("/api/exams/{course_id}", tags=["exams"])
+async def get_exams_endpoint(course_id:str):
+    assignments = await get_exams_by_course_id(course_id)
+    if not assignments:
+        raise HTTPException(status_code=404, detail=f"No exams found in course {course_id}")
+    return assignments
+
+@router.get("/api/exams", tags=["exams"])
+async def get_all_exams_endpoint():
+    exams = await get_all_exams()
+    if not exams:
+        raise HTTPException(status_code=404, detail="No exams found")
+    return exams
+
+@router.post("/api/exams", tags=["exams"])
+async def create_exams(exam: dict = Body(...)):
+    """
+    Create a new assignment.
+    The frontend should send a JSON object with the assignment details.
+    """
+    result = await exams_controller["create"](exam)
+    if not result:
+        raise HTTPException(status_code=500, detail="Failed to create assignment")
+    return result
 
 # Keep existing table routes
 for table, controller in table_routes.items():

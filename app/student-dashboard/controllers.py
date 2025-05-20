@@ -7,7 +7,9 @@ from models import (
     student_progress_model,
     student_course_profile_model,
     recommendation_logs_model,
-    course_model
+    course_model,
+    assignments_model,
+    exams_model
 )
 
 # Helper to wrap models as controller logic
@@ -29,6 +31,8 @@ student_progress_controller = make_controller(student_progress_model)
 student_course_profile_controller = make_controller(student_course_profile_model)
 recommendation_logs_controller = make_controller(recommendation_logs_model)
 course_controller = make_controller(course_model)
+assignments_controller = make_controller(assignments_model)
+exams_controller = make_controller(exams_model)
 
 async def get_users_by_role(role_name):
     role = await roles_controller["read"]({"role_name": role_name})
@@ -56,3 +60,12 @@ async def get_batch_courses(batch_id):
 
 async def get_student_profile(user_id):
     user = await user_controller["read"]({"id": user_id})
+
+async def get_assignments_by_course_id(course_id):
+    return await assignments_controller["read"]({"course_id": course_id})
+
+async def get_exams_by_course_id(course_id):
+    return await exams_controller["read"]({"course_id": course_id})
+
+async def get_all_exams():
+    return await exams_controller["read"]({})
