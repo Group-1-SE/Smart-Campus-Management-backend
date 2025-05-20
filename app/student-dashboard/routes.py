@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from request_schemas import Record, Filter, UpdateRequest
 from controllers import (
     user_controller, auth_user_controller, roles_controller,
@@ -6,8 +6,10 @@ from controllers import (
     student_course_profile_controller, recommendation_logs_controller, course_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
-    get_student_profile, get_student_course_profile, get_student_course_results
+    get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller
 )
+from recommendations.main import get_study_recommendations, get_course_recommendations
+from typing import List, Dict
 
 router = APIRouter()
 
@@ -47,43 +49,43 @@ async def get_users_by_role_name(role_name: str):
     return users
 
 @router.get("/users/batch/{batch_id}", tags=["users"])
-async def get_batch_users(batch_id: int):
+async def get_batch_users(batch_id: str):
     users = await get_batch_students(batch_id)
     if not users:
         raise HTTPException(status_code=404, detail=f"No users found in batch {batch_id}")
     return users
 
 @router.get("/users/{user_id}/profile", tags=["users"])
-async def get_user_profile(user_id: int):
+async def get_user_profile(user_id: str):
     profile = await get_student_profile(user_id)
     if not profile:
         raise HTTPException(status_code=404, detail=f"User profile not found")
     return profile
 
 # Course Management Endpoints
-@router.get("/courses/active", tags=["courses"])
-async def get_active_courses():
-    courses = await course_controller["read"]({"status": "active"})
+@router.get("/courses", tags=["courses"])
+async def get_all_courses():
+    courses = await course_controller["read"]({})
     if not courses:
         raise HTTPException(status_code=404, detail="No active courses found")
     return courses
 
 @router.get("/courses/batch/{batch_id}", tags=["courses"])
-async def get_batch_courses_endpoint(batch_id: int):
+async def get_batch_courses_endpoint(batch_id: str):
     courses = await get_batch_courses(batch_id)
     if not courses:
         raise HTTPException(status_code=404, detail=f"No courses found for batch {batch_id}")
     return courses
 
 @router.get("/courses/student/{student_id}", tags=["courses"])
-async def get_student_courses_endpoint(student_id: int):
+async def get_student_courses_endpoint(student_id: str):
     courses = await get_student_courses(student_id)
     if not courses:
         raise HTTPException(status_code=404, detail=f"No courses found for student {student_id}")
     return courses
 
 @router.get("/courses/{course_id}/students", tags=["courses"])
-async def get_course_students_endpoint(course_id: int):
+async def get_course_students_endpoint(course_id: str):
     students = await get_course_students(course_id)
     if not students:
         raise HTTPException(status_code=404, detail=f"No students found for course {course_id}")
@@ -91,14 +93,14 @@ async def get_course_students_endpoint(course_id: int):
 
 # Student Progress Endpoints
 @router.get("/student-progress/student/{student_id}", tags=["student-progress"])
-async def get_student_progress_endpoint(student_id: int):
+async def get_student_progress_endpoint(student_id: str):
     progress = await get_student_progress(student_id)
     if not progress:
         raise HTTPException(status_code=404, detail=f"No progress found for student {student_id}")
     return progress
 
 @router.get("/student-progress/course/{course_id}", tags=["student-progress"])
-async def get_course_progress(course_id: int):
+async def get_course_progress(course_id: str):
     progress = await student_progress_controller["read"]({"course_id": course_id})
     if not progress:
         raise HTTPException(status_code=404, detail=f"No progress found for course {course_id}")
@@ -113,12 +115,26 @@ async def get_course_progress(course_id: int):
 #     return batches
 
 @router.get("/batch/{batch_id}/students", tags=["batch"])
-async def get_batch_students_endpoint(batch_id: int):
+async def get_batch_students_endpoint(batch_id: str):
     students = await get_batch_students(batch_id)
     if not students:
         raise HTTPException(status_code=404, detail=f"No students found in batch {batch_id}")
     return students
 
+@router.get("/recommendations/study/{student_id}/", tags=["recommendations"])
+async def get_student_recommendations_endpoint(student_id: str):
+    recommendations = await get_study_recommendations_controller(student_id)
+    if not recommendations:
+        raise HTTPException(status_code=404, detail=f"No recommendations found for student {student_id}")
+    return recommendations
+
+# Define the endpoint for getting course recommendations
+@router.post("/recommendations/course/{student_id}/", tags=["recommendations"])
+async def get_course_recommendations_endpoint(student_id: str):
+    recommendations = await get_course_recommendations_controller(student_id)
+    if not recommendations:
+        raise HTTPException(status_code=404, detail=f"No recommendations found for student {student_id}")
+    return recommendations
 # Keep existing table routes
 for table, controller in table_routes.items():
     prefix = f"/{table}"
@@ -161,3 +177,22 @@ for table, controller in table_routes.items():
         if not results:
             raise HTTPException(status_code=404, detail=f"No course results found for student {student_id}")
         return results
+    
+    # ... existing code ...
+
+
+
+# Add other endpoints here, e.g., for study recommendations
+# from .controllers import fetch_study_recommendations_controller
+# from .recommendations.openai import RecommendationsResponse
+# @router.post("/study-recommendations", response_model=RecommendationsResponse)
+# async def get_study_recommendations_endpoint(
+#    course_profiles: List[Dict] = Body(..., description="List of course profiles with progress details")
+# ):
+#    """
+#    Provides study recommendations for the student based on their course progress.
+#    """
+#    return await fetch_study_recommendations_controller(course_profiles)
+
+        
+        

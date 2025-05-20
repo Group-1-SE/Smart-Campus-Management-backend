@@ -18,6 +18,9 @@ def make_controller(model):
         "update": model["update"],
         "delete": model["delete"]
     }
+    
+# from recommendations.main import get_study_recommendations, get_course_recommendations
+from recommendations.openai import get_study_recommendations,  get_course_recommendations
 
 # Define controllers per table
 user_controller = make_controller(users_model)
@@ -40,11 +43,11 @@ async def get_student_courses(student_id):
     student = await user_controller["read"]({"id": student_id})
     if not student:
         return None
-    return await course_controller["read"]({"batch_id": student[0]["batch_id"]})
+    return await course_controller["read"]({"student_id": student_id})
 
 async def get_batch_students(batch_id):
     # First get all related batch entries for this batch
-    related_batches = await related_batch_controller["read"]({"batch_id": batch_id})
+    related_batches = await related_batch_controller["read"]({"student_id": batch_id})
     if not related_batches:
         return []
     
@@ -114,4 +117,66 @@ async def get_student_course_results(student_id):
     return {
         "student_id": student_id,
         "course_results": course_results
+    }
+    
+async def get_study_recommendations_controller(student_id):
+    # Get student's current courses and progress
+    student = await user_controller["read"]({"id": student_id})
+    if not student:
+        return None
+    
+    # Get student's current course profiles
+    # current_courses = await student_course_profile_controller["read"]({"student_id": student_id})
+    
+    # # Get recommendation logs for the student
+    # recommendations = await recommendation_logs_controller["read"]({"student_id": student_id})
+    
+    # Get course profile for student
+    course_profiles = await get_student_course_profile(student_id)
+    
+    recommendations = get_study_recommendations(course_profiles)
+    
+    
+    
+    return {
+        # "student_id": student_id,
+        # "current_courses": len(current_courses),
+        "recommendations": recommendations,
+    }
+    
+async def get_course_recommendations_controller(student_id):
+    # Get student's current courses and progress
+    student = await user_controller["read"]({"id": student_id})
+    if not student:
+        return None
+    
+    # Get student's current course profiles
+    # current_courses = await student_course_profile_controller["read"]({"student_id": student_id})
+    
+    # # Get recommendation logs for the student
+    # recommendations = await recommendation_logs_controller["read"]({"student_id": student_id})
+    
+    # Get course profile for student
+    available_courses = await course_controller["read"]({})
+    
+    student_courses = await get_student_course_profile(student_id)
+    
+    transformed = [
+    {
+        "course_name": item["course_details"]["name"],
+        "avg_score": item["course_profile"]["avg_score"],
+        "total_time_spent": item["course_profile"]["total_time_spent"]
+    }
+    for item in student_courses["course_profiles"]
+]
+    
+    recommendations = get_course_recommendations(transformed, available_courses)
+    
+    
+    return {
+        # "student_id": student_id,
+        # "current_courses": len(current_courses),
+        "recommendations": recommendations,
+        # "courses": transformed,
+        # "available_courses": available_courses
     }
