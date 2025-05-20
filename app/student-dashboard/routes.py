@@ -6,7 +6,8 @@ from controllers import (
     student_course_profile_controller, recommendation_logs_controller, course_controller,
     get_users_by_role, get_student_courses, get_batch_students,
     get_student_progress, get_course_students, get_batch_courses,
-    get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id
+    get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id, get_unregistered_students_by_course_id,
+    enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course
 )
 from recommendations.main import get_study_recommendations, get_course_recommendations
 from typing import List, Dict
@@ -146,7 +147,58 @@ async def get_course_data(course_id: str):
 
     return course_data
 
+@router.get("/courses/{course_id}/unregistered-students", tags=["courses"]) # Define the new route
+async def get_unregistered_students(course_id: str):
+    """
+    Retrieves a list of students who are not enrolled in the specified course.
+    """
+    unregistered_students = await get_unregistered_students_by_course_id(course_id)
+    if not unregistered_students:
+        raise HTTPException(status_code=404, detail=f"No unregistered students found for course {course_id}")
 
+    return unregistered_students
+
+@router.post("/courses/{course_id}/enroll/{user_id}", tags=["courses"]) # Route for enrolling
+async def enroll_student(course_id: str, user_id: str):
+    """
+    Enrolls a student in the specified course.
+    """
+    enrollment_result = await enroll_student_in_course(user_id, course_id)
+    if not enrollment_result:
+        raise HTTPException(status_code=500, detail=f"Failed to enroll student {user_id} in course {course_id}. May already be enrolled or user/course not found.")
+    return {"message": "Student enrolled successfully", "enrollment": enrollment_result}
+
+@router.delete("/courses/{course_id}/unenroll/{user_id}", tags=["courses"]) # Route for unenrolling
+async def unenroll_student(course_id: str, user_id: str):
+    """
+    Unenrolls a student from the specified course.
+    """
+    unenrollment_result = await unenroll_student_from_course(user_id, course_id)
+    if not unenrollment_result:
+        raise HTTPException(status_code=404, detail=f"Enrollment not found for student {user_id} in course {course_id}")
+    return {"message": "Student unenrolled successfully", "unenrollment": unenrollment_result}
+
+@router.post("/courses/{course_id}/enroll/faculty/{user_id}", tags=["courses"]) # Route for enrolling faculty
+async def enroll_faculty(course_id: str, user_id: str):
+    """
+    Associates a faculty member with the specified course.
+    """
+    enrollment_result = await enroll_faculty_in_course(user_id, course_id)
+    if not enrollment_result:
+        # The error detail here should reflect the faculty association
+        raise HTTPException(status_code=500, detail=f"Failed to associate faculty {user_id} with course {course_id}. May already be associated or user/course not found.")
+    return {"message": "Faculty associated successfully", "association": enrollment_result}
+
+@router.delete("/courses/{course_id}/unenroll/faculty/{user_id}", tags=["courses"]) # Route for unenrolling faculty
+async def unenroll_faculty(course_id: str, user_id: str):
+    """
+    Removes the association of a faculty member from the specified course.
+    """
+    unenrollment_result = await unenroll_faculty_from_course(user_id, course_id)
+    if not unenrollment_result:
+        # The error detail here should reflect the faculty association
+        raise HTTPException(status_code=404, detail=f"Association not found for faculty {user_id} with course {course_id}")
+    return {"message": "Faculty association removed successfully", "association": unenrollment_result}
 
 
 # Keep existing table routes

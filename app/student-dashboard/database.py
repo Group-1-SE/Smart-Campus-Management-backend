@@ -37,10 +37,16 @@ async def update_record(table: str, filters: dict, updates: dict):
 
 async def delete_record(table: str, filters: dict):
     try:
-        query = supabase.table(table)
-        for key, value in filters.items():
-            query = query.eq(key, value)
-        response = query.delete().execute()
+        # Start the delete query builder
+        query = supabase.table(table).delete() # Call .delete() first
+
+        # Now apply filters using .eq() on the result of .delete()
+        if filters:
+            for key, value in filters.items():
+                query = query.eq(key, value)
+
+        # Execute the query
+        response = query.execute()
         return response.data
     except Exception as e:
         print(f"[DELETE] Error in '{table}': {e}")
