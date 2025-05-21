@@ -27,6 +27,20 @@ class CourseRecommendationsResponse(BaseModel):
     overall_recommendation: str = Field(..., description="Overall recommendation for course selection")
     recommended_courses: List[RecommendedCourse] = Field(..., description="List of recommended courses")
 
+class StudentPerformance(BaseModel):
+    student_id: str = Field(..., description="Student's registration number")
+    student_name: str = Field(..., description="Student's full name")
+    grade: float = Field(..., description="Student's grade in the course")
+    attendance_rate: float = Field(..., description="Student's attendance rate in the course")
+    participation_score: float = Field(..., description="Student's participation score")
+
+class LecturerFeedback(BaseModel):
+    course_name: str = Field(..., description="Name of the course")
+    overall_performance: str = Field(..., description="Overall performance analysis of the class")
+    performance_metrics: Dict[str, float] = Field(..., description="Key performance metrics for the class")
+    recommendations: List[str] = Field(..., description="Recommendations for improving student performance")
+    individual_feedback: List[StudentPerformance] = Field(..., description="Individual student performance analysis")
+
 
 def get_study_recommendations(course_profiles: List[Dict]) -> List[Dict]:
     print("Getting study recommendations based on course profiles...")

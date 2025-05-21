@@ -10,7 +10,7 @@ from controllers import (
     get_student_profile, get_assignments_by_course_id,
     get_exams_by_course_id, get_all_exams,
     get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id, get_unregistered_students_by_course_id,
-    enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course, get_courses_by_faculty_id, update_student_course_mark, create_student_course_profile_with_mark
+    enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course, get_courses_by_faculty_id, update_student_course_mark, create_student_course_profile_with_mark, get_chatbot_response_controller
 )
 from recommendations.main import get_study_recommendations, get_course_recommendations
 from typing import List, Dict
@@ -347,6 +347,28 @@ for table, controller in table_routes.items():
 #    Provides study recommendations for the student based on their course progress.
 #    """
 #    return await fetch_study_recommendations_controller(course_profiles)
+
+# Add this new route
+@router.post("/chatbot/chat", tags=["chatbot"])
+async def chat_with_bot(
+    past_messages: List[Dict] = Body(..., description="List of previous messages"),
+    user_message: str = Body(..., description="Current user message")
+):
+    """
+    Endpoint for interacting with the university chatbot.
+    
+    Args:
+        past_messages: List of previous messages in the format 
+            [{"role": "user/assistant", "content": "message"}, ...]
+        user_message: The current message from the user
+    
+    Returns:
+        Dict containing the chatbot's response
+    """
+    response = await get_chatbot_response_controller(past_messages, user_message)
+    if response["status"] == "error":
+        raise HTTPException(status_code=500, detail=response["message"])
+    return response
 
         
         
