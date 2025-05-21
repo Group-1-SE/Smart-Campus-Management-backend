@@ -10,7 +10,7 @@ from controllers import (
     get_student_profile, get_assignments_by_course_id,
     get_exams_by_course_id, get_all_exams,
     get_student_profile, get_student_course_profile, get_student_course_results, get_study_recommendations_controller, get_course_recommendations_controller, get_course_data_by_course_id, get_unregistered_students_by_course_id,
-    enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course
+    enroll_student_in_course, unenroll_student_from_course, enroll_faculty_in_course, unenroll_faculty_from_course, get_courses_by_faculty_id, update_student_course_mark, create_student_course_profile_with_mark
 )
 from recommendations.main import get_study_recommendations, get_course_recommendations
 from typing import List, Dict
@@ -246,6 +246,47 @@ async def unenroll_faculty(course_id: str, user_id: str):
         # The error detail here should reflect the faculty association
         raise HTTPException(status_code=404, detail=f"Association not found for faculty {user_id} with course {course_id}")
     return {"message": "Faculty association removed successfully", "association": unenrollment_result}
+
+@router.get("/faculty/{faculty_id}/courses", tags=["faculty"]) # Define the new route
+async def get_faculty_courses(faculty_id: str):
+    """
+    Retrieves all courses associated with a given faculty member.
+    """
+    courses = await get_courses_by_faculty_id(faculty_id)
+    if not courses:
+        raise HTTPException(status_code=404, detail=f"No courses found for faculty member {faculty_id}")
+
+    return courses
+
+@router.put("/students/{student_id}/courses/{course_id}/mark", tags=["student-progress"]) # Define the new route
+async def update_mark_for_student_course(student_id: str, course_id: str, mark: float = Body(..., embed=True)):
+    """
+    Updates the mark (average score) for a specific student in a specific course.
+    """
+    updated_record = await update_student_course_mark(student_id, course_id, mark)
+    
+    # The update controller returns a list of updated records or None/[]
+    if not updated_record:
+        # Could mean no matching record found for update
+        raise HTTPException(status_code=404, detail=f"Student course profile not found for student {student_id} in course {course_id}")
+        
+    return {"message": "Student mark updated successfully", "updated_profile": updated_record[0]} # Assuming only one record is updated
+
+@router.post("/students/{student_id}/courses/{course_id}/mark", tags=["student-progress"]) # Define the new route for creating a mark
+async def create_mark_for_student_course(student_id: str, course_id: str, mark: float = Body(..., embed=True)):
+    """
+    Creates an initial mark (average score) for a specific student in a specific course.
+    Will likely fail if the student_course_profile already exists.
+    """
+    created_record = await create_student_course_profile_with_mark(student_id, course_id, mark)
+
+    if not created_record:
+        # This might indicate a conflict (profile already exists) or other creation error
+        raise HTTPException(status_code=400, detail=f"Failed to create student course profile with mark for student {student_id} in course {course_id}. Profile may already exist.")
+
+    # Assuming create returns the created record(s)
+    return {"message": "Student mark created successfully", "created_profile": created_record[0]} # Assuming one record is created
+
 
 
 # Keep existing table routes

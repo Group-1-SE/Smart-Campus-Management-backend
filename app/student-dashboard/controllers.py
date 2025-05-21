@@ -15,6 +15,7 @@ from models import (
 
 )
 
+import random
 # Helper to wrap models as controller logic
 def make_controller(model):
     return {
@@ -336,4 +337,73 @@ async def unenroll_faculty_from_course(user_id: str, course_id: str):
     delete_filters = filters # Use the same filters to find and delete
     result = await faculty_course_profile_controller["delete"](delete_filters)
 
+    return result
+
+async def get_courses_by_faculty_id(faculty_id: str):
+    """
+    Retrieves all courses associated with a given faculty member from the
+    faculty_course_profile table.
+    """
+    # Find all entries in faculty_course_profile for the given faculty_id
+    faculty_course_associations = await faculty_course_profile_controller["read"]({"faculty_id": faculty_id})
+
+    if not faculty_course_associations:
+        return [] # Return an empty list if no courses are found for this faculty
+
+    # Get details for each associated course
+    courses = []
+    for association in faculty_course_associations:
+        course_id = association["course_id"]
+        course_details = await course_controller["read"]({"id": course_id})
+        if course_details:
+            courses.append(course_details[0]) # Append the first found course detail
+
+    return courses
+
+async def update_student_course_mark(student_id: str, course_id: str, mark: float):
+    """
+    Updates the average score for a student in a specific course
+    in the student_course_profile table.
+    """
+    # Define the filters to find the specific student_course_profile entry
+    filters = {
+        "student_id": student_id,
+        "course_id": course_id
+    }
+
+    # Define the updates to apply (setting the average score)
+    updates = {
+        "avg_score": mark
+    }
+
+    # Call the update method of the student_course_profile controller
+    # Note: This assumes an entry for the student and course already exists.
+    # You might want to add logic to create an entry if it doesn't exist,
+    # or handle the case where the update operation finds no matching record.
+    result = await student_course_profile_controller["update"](filters, updates)
+
+    # The update method should return the updated record(s) or None/error indicator
+    return result
+
+async def create_student_course_profile_with_mark(student_id: str, course_id: str, mark: float):
+    """
+    Creates a new student_course_profile entry with an initial average score.
+    Note: This will likely fail if a profile for the student and course already exists
+    due to database unique constraints. Consider using an "upsert" pattern
+    if you want to create or update.
+    """
+    profile_data = {
+        "student_id": student_id,
+        "course_id": course_id,
+        "avg_score": mark,
+        # Initialize other fields as necessary, e.g., to default values
+        "total_time_spent": random.randint(0, 50), # Example default value
+        "courses_completed": 1,
+        # "preferred_topics": [] # Assuming _text can be an empty list
+    }
+
+    # Call the create method
+    result = await student_course_profile_controller["create"](profile_data)
+
+    # The create method should return the created record or None/error indicator
     return result
