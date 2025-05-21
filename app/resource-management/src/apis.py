@@ -35,6 +35,7 @@ class Resource(BaseModel):
     name: str
     type: str
     capacity :int
+    location : str
 
 @app.get("/")
 def read_root():
@@ -51,7 +52,8 @@ def insert_resource(resource: Resource):
         .insert({
             "resource_name": resource.name,
             "resource_type": resource.type,
-            "capacity":resource.capacity
+            "capacity":resource.capacity,
+            "location":resource.location
         })
         .execute()
     )
@@ -60,6 +62,7 @@ class ResourceUpdate(BaseModel):
     name: str
     type: str
     capacity: int
+    location :str
 
 @app.put("/resource-update/{resource_id}")
 def update_resource(resource_id: int, updated_resource: ResourceUpdate):
@@ -68,7 +71,8 @@ def update_resource(resource_id: int, updated_resource: ResourceUpdate):
         .update({
             "resource_name": updated_resource.name,
             "resource_type": updated_resource.type,
-            "capacity": updated_resource.capacity
+            "capacity": updated_resource.capacity,
+            "location":updated_resource.location
         })
         .eq("id", resource_id)
         .execute()
