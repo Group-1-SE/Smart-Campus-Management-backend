@@ -28,7 +28,7 @@ def make_controller(model):
     
 # from recommendations.main import get_study_recommendations, get_course_recommendations
 from recommendations.openai import get_study_recommendations,  get_course_recommendations
-from chatbot.chatbot import get_chatbot_response
+from chatbot.chatbot import get_chatbot_response, get_lecturer_chatbot_response
 
 # Define controllers per table
 user_controller = make_controller(users_model)
@@ -410,7 +410,7 @@ async def create_student_course_profile_with_mark(student_id: str, course_id: st
     # The create method should return the created record or None/error indicator
     return result
 
-async def get_chatbot_response_controller(past_messages: List[Dict], user_message: str) -> Dict:
+async def get_chatbot_response_controller(past_messages: List[Dict], user_message: str, user_id: str = None) -> Dict:
     """
     Controller function to handle chatbot interactions.
     
@@ -424,6 +424,30 @@ async def get_chatbot_response_controller(past_messages: List[Dict], user_messag
     """
     try:
         response = get_chatbot_response(past_messages, user_message)
+        return {
+            "message": response,
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "message": f"Error: {str(e)}",
+            "status": "error"
+        }
+
+async def get_lecturer_chatbot_response_controller(past_messages: List[Dict], user_message: str, user_id: str = None) -> Dict:
+    """
+    Controller function to handle lecturer chatbot interactions.
+    
+    Args:
+        past_messages (List[Dict]): List of previous messages in the format 
+            [{"role": "user/assistant", "content": "message"}, ...]
+        user_message (str): The current user message to respond to
+    
+    Returns:
+        Dict: Response containing the chatbot's message
+    """
+    try:
+        response = get_lecturer_chatbot_response(past_messages, user_message)
         return {
             "message": response,
             "status": "success"

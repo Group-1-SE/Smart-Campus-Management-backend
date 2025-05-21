@@ -57,6 +57,52 @@ def get_chatbot_response(past_messages: List[Dict], user_message: str) -> str:
 
     except Exception as e:
         return f"I apologize, but I encountered an error: {str(e)}"
+    
+    
+def get_lecturer_chatbot_response(past_messages: List[Dict], user_message: str) -> str:
+    """
+    Get a response from the lecturer assistant chatbot.
+    
+    Args:
+        past_messages (List[Dict]): List of previous messages in the format 
+            [{"role": "user/assistant", "content": "message"}, ...]
+        user_message (str): The current user message to respond to
+    
+    Returns:
+        str: The chatbot's response
+    """
+    try:
+        # System prompt defining the lecturer chatbot's role
+        system_prompt = """You are a helpful university faculty assistant chatbot. Your role is to help lecturers with:
+        - Course management and scheduling
+        - Student assessment and grading guidelines
+        - Academic policies and procedures
+        - Research and publication support
+        - Teaching resources and best practices
+        - Department meetings and committees
+        - Faculty development opportunities
+        - Student advising and mentoring guidelines
+        - Curriculum development and updates
+        - Academic integrity and plagiarism policies
+        
+        Always be professional, friendly, and provide accurate information. If you're unsure about something, 
+        acknowledge that and suggest contacting the relevant department or administrator."""
+
+        # Prepare all messages for the API call
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(past_messages)
+        messages.append({"role": "user", "content": user_message})
+
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"I apologize, but I encountered an error: {str(e)}"
 
 # # Example usage
 # if __name__ == "__main__":
